@@ -1,0 +1,34 @@
+MEIN FSV – KOMPLETTER UMZUG (ohne Vereinskleidung)
+
+NEUES REPOSITORY: https://github.com/fsvniederolm/fsvniederolm.github.io
+Alle Dateien dieses ZIPs direkt in das ROOT-Verzeichnis hochladen (nicht den ZIP selbst).
+
+Neue Adressen:
+  https://fsvniederolm.github.io/mein-fsv.html
+  https://fsvniederolm.github.io/mein-fsv-login.html
+  https://fsvniederolm.github.io/xbot.html
+  https://fsvniederolm.github.io/vereinsheim.html
+  https://fsvniederolm.github.io/trainingsplanung.html
+  https://fsvniederolm.github.io/turnierantrag.html
+  https://fsvniederolm.github.io/spielstaettenbelegung.html (OEFFENTLICH)
+  https://fsvniederolm.github.io/mitgliedschaft.html (OEFFENTLICH)
+  https://fsvniederolm.github.io/meine-fussballschule.html
+  https://fsvniederolm.github.io/fussballschule-belegung.html (bisheriger Zugang)
+
+Vereinskleidung bleibt: https://fsvniederolm.github.io/shop/
+
+SHOP-REPOSITORY NOCH NICHT LOESCHEN!
+  Der Fanshop und seine Abwicklung (index.html, images/, admin.html,
+  kassierer-portal.html, sport-weber-portal.html, Logos und ggf. Workflows)
+  muessen funktionsfaehig bleiben.
+  Erst alle neuen Seiten testen; danach alte Nicht-Shop-Seiten im shop-Repo
+  entfernen oder auf die neue URL umleiten.
+
+WICHTIG: GitHub Pages ist oeffentlich; Supabase RLS bleibt entscheidend.
+  Keine Supabase service_role-Schluessel ins Repository hochladen.
+  Bestehende Supabase Auth-Sitzungen koennen bei Pfadwechsel weiterlaufen,
+  aber Anmeldung und Rollen muessen im privaten Fenster getestet werden.
+  Aeltere Links aus E-Mails/QR-Codes nach dem Test aktualisieren.
+
+HINWEIS: Shop-spezifische Portale verbleiben vorerst beim Shop, da sie
+  zur Bestellabwicklung gehoeren.

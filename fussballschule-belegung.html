@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FSV Nieder-Olm – Fußballschule Belegung</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0c1014;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;min-height:100vh}
+.wrap{max-width:760px;margin:auto;padding:24px 16px 70px}.card{background:linear-gradient(145deg,rgba(25,30,37,.96),rgba(13,16,20,.9));border:1px solid rgba(255,255,255,.16);border-radius:24px;padding:22px;box-shadow:0 20px 60px #0008}
+h1{margin:0 0 6px;font-size:28px}.sub{color:#ffffffb8;margin-bottom:24px}label{display:block;font-weight:700;margin:15px 0 7px}
+input,select,textarea,button{font:inherit}input,select,textarea{width:100%;min-width:0;background:#23282f;color:#fff;border:1px solid #ffffff38;border-radius:14px;padding:0 14px;height:56px}
+textarea{height:82px;padding-top:12px;resize:vertical}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.btn{width:100%;border:0;border-radius:14px;padding:15px;font-weight:800;color:#fff;background:#1677ff;margin-top:20px;cursor:pointer}
+.msg{min-height:22px;margin-top:12px;color:#b8c9e8}.list{margin-top:28px}.entry{border:1px solid #ffffff24;background:#141920;border-radius:16px;padding:14px;margin:10px 0;display:flex;gap:12px;align-items:center}.entry .txt{flex:1;min-width:0}.entry b{display:block}.entry small{color:#ffffffa8}.del{border:1px solid #ff5b65;background:#2a1114;color:#fff;border-radius:10px;padding:9px 11px;font-weight:700}
+.badge{display:inline-block;background:#1677ff;border:2px solid #000;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:800;margin-bottom:12px}
+#app{display:none}.login{max-width:460px;margin:80px auto}.version{position:fixed;right:14px;bottom:12px;color:#ffffff80;font-size:12px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.wrap{padding:16px 12px 65px}.card{padding:18px}}
+</style></head><body>
+<div class="wrap">
+<div id="login" class="card login"><h1>Fußballschule</h1><div class="sub">Manuelle Spielstättenbelegung</div>
+<label for="pw">Passwort</label><input id="pw" type="password" autocomplete="current-password">
+<button class="btn" onclick="login()">Öffnen</button><div class="msg" id="loginMsg"></div></div>
+<div id="app" class="card"><span class="badge">MANUELL · BLAU</span><h1>Spielstätte belegen</h1><div class="sub">Einträge der Fußballschule werden in der öffentlichen Belegung blau angezeigt.</div>
+<form id="form">
+<label>Datum *</label><input id="datum" type="date" required>
+<div class="grid"><div><label>Uhrzeit von *</label><input id="von" type="time" required></div><div><label>Uhrzeit bis *</label><input id="bis" type="time" required></div></div>
+<label>Spielstätte *</label><select id="ort" required><option>Nieder-Olm Kleinfeld KR</option><option>Nieder-Olm KR</option><option>Nieder-Olm RA</option></select>
+<label>Bezeichnung</label><input id="titel" value="Fußballschule" maxlength="80">
+<label>Notiz / Gruppe</label><input id="notiz" placeholder="z. B. Feriencamp" maxlength="120">
+<button class="btn" type="submit">Belegung speichern</button><div class="msg" id="msg"></div>
+</form>
+<div class="list"><h2>Einträge für den gewählten Tag</h2><div id="entries"></div></div>
+</div></div><div class="version">Version 1.0</div>
+<script>
+const SUPABASE_URL="https://ibhtvjaawinpcwvbwzct.supabase.co";
+const SUPABASE_KEY="sb_publishable_omPVDjNvHQ5SULxKhJQqUA_-rCJ0PL3";
+const PASSWORD="fsv1893";
+const H={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,"Content-Type":"application/json"};
+const $=id=>document.getElementById(id);
+function login(){if($("pw").value===PASSWORD){$("login").style.display="none";$("app").style.display="block";init()}else $("loginMsg").textContent="Passwort falsch."}
+function iso(d){return d.toISOString().slice(0,10)}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+async function rows(){
+ const r=await fetch(`${SUPABASE_URL}/rest/v1/fussballschule_belegung?select=*&datum=eq.${encodeURIComponent($("datum").value)}&order=uhrzeit_von.asc`,{headers:H});
+ if(!r.ok)throw Error(await r.text());return r.json()
+}
+async function load(){
+ try{const data=await rows();$("entries").innerHTML=data.length?data.map(x=>`<div class="entry"><div class="txt"><b>${esc(x.uhrzeit_von.slice(0,5))}–${esc(x.uhrzeit_bis.slice(0,5))} · ${esc(x.spielstaette)}</b><small>${esc(x.titel||"Fußballschule")}${x.notiz?" · "+esc(x.notiz):""}</small></div><button class="del" onclick="del('${x.id}')">Löschen</button></div>`).join(""):'<div class="sub">Keine manuellen Einträge.</div>'}catch(e){$("entries").textContent="Einträge konnten nicht geladen werden."}
+}
+async function del(id){
+ if(!confirm("Diesen Eintrag wirklich löschen?"))return;
+ const r=await fetch(`${SUPABASE_URL}/rest/v1/fussballschule_belegung?id=eq.${encodeURIComponent(id)}`,{method:"DELETE",headers:{...H,Prefer:"return=representation"}});
+ if(!r.ok){$("msg").textContent="Löschen fehlgeschlagen.";return}$("msg").textContent="Eintrag gelöscht.";load()
+}
+$("form").addEventListener("submit",async e=>{
+ e.preventDefault();$("msg").textContent="Speichere …";
+ if($("bis").value<=$("von").value){$("msg").textContent="„Uhrzeit bis“ muss nach „Uhrzeit von“ liegen.";return}
+ const body={datum:$("datum").value,uhrzeit_von:$("von").value,uhrzeit_bis:$("bis").value,spielstaette:$("ort").value,titel:$("titel").value.trim()||"Fußballschule",notiz:$("notiz").value.trim()};
+ const r=await fetch(`${SUPABASE_URL}/rest/v1/fussballschule_belegung`,{method:"POST",headers:{...H,Prefer:"return=representation"},body:JSON.stringify(body)});
+ if(!r.ok){$("msg").textContent="Speichern fehlgeschlagen: "+await r.text();return}$("msg").textContent="Belegung gespeichert.";load()
+});
+function init(){$("datum").value=iso(new Date());$("datum").addEventListener("change",load);load()}
+$("pw").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
+</script></body></html>

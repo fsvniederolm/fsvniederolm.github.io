@@ -1,0 +1,167 @@
+<!doctype html><html lang="de"><head>
+<link rel="apple-touch-icon" sizes="180x180" href="admin-apple-touch-icon.png?v=2.29">
+<link rel="icon" type="image/png" sizes="512x512" href="admin-icon-512.png?v=2.29">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FSV Admin">
+<meta name="application-name" content="FSV Admin">
+<meta name="theme-color" content="#10151b">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FSV Nieder-Olm – Spielstätten Planung · Version 1.8.1</title><style>
+:root{--bg:#0a1115;--panel:#142027;--line:#30414a;--text:#f4f8fa;--muted:#a8bbc4;--red:#e30613;--green:#247e46}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:15px Arial,sans-serif}header{background:#111c23;border-bottom:4px solid var(--red);padding:16px 20px;position:sticky;top:0;z-index:5}header>div{max-width:1200px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px}h1{font-size:20px;margin:0}small,.muted{color:var(--muted)}main{max-width:1200px;margin:20px auto;padding:0 14px;display:grid;gap:16px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}h2{font-size:18px;margin:0 0 14px}.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:end}.controls>label{flex:1;min-width:145px}label{display:grid;gap:6px;font-weight:bold;font-size:13px}input,select,button{font:inherit}input,select{width:100%;padding:10px;background:#0c171c;color:#fff;border:1px solid #52646d;border-radius:9px}button{padding:10px 13px;border:1px solid #5c6e78;background:#263740;color:#fff;border-radius:9px;cursor:pointer;font-weight:bold}button:hover{filter:brightness(1.15)}button.red{background:var(--red);border-color:var(--red)}button.green{background:#177f43;border-color:#177f43}.pill{display:inline-block;padding:5px 10px;border-radius:99px;background:#263740}.warn{color:#ffd48a}.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(290px,1fr);gap:16px}.pitch{position:relative;aspect-ratio:1.6;background:repeating-linear-gradient(90deg,#218443 0%,#218443 12.5%,#267e43 12.5%,#267e43 25%);border:3px solid #e5f5e8;border-radius:6px;overflow:hidden;min-height:220px}.pitch:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent calc(50% - 1px),#d6f1d9 50%,transparent calc(50% + 1px));pointer-events:none;z-index:1}.pitch:after{content:"";position:absolute;left:50%;top:50%;width:16%;aspect-ratio:1;border:2px solid #d6f1d9;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:1}.zones{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}.pitch .goal{position:absolute;top:calc(50% - 19%);height:38%;width:16px;border:3px solid #fff;background:repeating-linear-gradient(0deg,rgba(255,255,255,.17) 0 5px,rgba(255,255,255,.03) 5px 10px);z-index:3;pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.15)}.pitch .goal.left{left:0;border-left:0;border-radius:0 4px 4px 0}.pitch .goal.right{right:0;border-right:0;border-radius:4px 0 0 4px}.pitch.small .zones{grid-template-columns:1fr 1fr;grid-template-rows:1fr}.zone{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;border:1px dashed rgba(255,255,255,.65);background:rgba(0,0,0,.08);padding:8px;min-width:0}.zone.occupied{background:rgba(126,214,106,.35)}.zone.backup{background:repeating-linear-gradient(135deg,rgba(232,172,38,.3) 0,rgba(232,172,38,.3) 7px,rgba(29,83,46,.35) 7px,rgba(29,83,46,.35) 14px)}.zone.conflict{background:rgba(230,6,19,.56)}.zone strong{font-size:clamp(12px,2.2vw,19px);text-shadow:0 1px 3px #123}.zone span{font-size:11px}.zone.selected{outline:3px solid #ffdf77;outline-offset:-4px}.zone.closed{background:rgba(40,40,40,.65)}.zone:hover{filter:brightness(1.14)}.list{display:grid;gap:9px}.entry{background:#0e1a20;border:1px solid #334b55;border-radius:10px;padding:11px;display:flex;justify-content:space-between;gap:10px;align-items:center}.entry b{color:#eaffef}.entry small{display:block;margin-top:5px}.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.formgrid .wide{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.note{border-left:4px solid #f0b84e;padding:10px 12px;background:#29281c;border-radius:6px}.status{min-height:22px;color:#b3ebc7}.foot{font-size:12px;color:var(--muted)}@media(max-width:760px){.layout{grid-template-columns:1fr}.panel{padding:14px}.formgrid{grid-template-columns:1fr}.pitch{aspect-ratio:1.35}header h1{font-size:17px}}
+</style><style id="footballschool-theme">
+body{background:#0c1014;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+header{background:#0c1014;border-bottom:1px solid rgba(255,255,255,.16);position:static;padding:23px 16px}
+header>div{max-width:1120px}header h1{font-size:28px}header small{color:#ffffffb8}
+main{max-width:1120px;margin:22px auto;padding:0 16px 70px;gap:20px}
+.panel{background:linear-gradient(145deg,rgba(25,30,37,.96),rgba(13,16,20,.9));border:1px solid rgba(255,255,255,.16);border-radius:24px;padding:22px;box-shadow:0 20px 60px #0008}
+h2{font-size:21px}label{font-size:14px}input,select{background:#23282f;color:#fff;border:1px solid #ffffff38;border-radius:14px;padding:13px 14px;min-height:49px}
+button{border-radius:14px;padding:13px 15px;background:#1677ff;border:0;font-weight:800}
+button.red{background:#e30613}button.green{background:#1677ff}
+.pill{background:#1677ff;border:2px solid #000;border-radius:999px;font-weight:800}
+.entry{background:#141920;border:1px solid #ffffff24;border-radius:16px;padding:14px}
+#access-screen{background:#0c1014!important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif!important}
+#access-screen .login{max-width:460px!important;background:linear-gradient(145deg,rgba(25,30,37,.96),rgba(13,16,20,.9))!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:24px!important;padding:25px!important;box-shadow:0 20px 60px #0008}
+#access-screen h1{font-size:28px;margin:0 0 8px}#access-screen input{background:#23282f!important;border:1px solid #ffffff38!important;border-radius:14px!important;min-height:56px!important}
+#access-screen button{background:#1677ff!important;border-radius:14px!important;font-weight:800!important;width:100%;padding:15px!important}
+#access-screen .warn{color:#ffffffb8!important}
+@media(max-width:600px){main{padding:0 12px 60px}.panel{padding:18px}header h1{font-size:25px}}
+</style></head><body><style id="access-style">body:not(.unlocked)>header,body:not(.unlocked)>main{display:none!important}#access-screen{min-height:100vh;display:grid;place-items:center;background:#0c1014;color:#f4f8fa;font-family:Arial,sans-serif;padding:20px}body.unlocked #access-screen{display:none}#access-screen .login{width:min(440px,100%);padding:25px;border:1px solid #46515a;border-radius:20px;background:#1a2026;text-align:center}#access-error{color:#ffb4b4;line-height:1.5}#setup-panel{margin-top:16px;text-align:left}#setup-panel button{margin:8px 0;background:#1677ff;color:white;border:0;padding:12px;border-radius:10px}</style><section id="access-screen"><div class="login"><h1>Spielstätten Planung</h1><p id="access-error" role="status">Administratorberechtigung wird geprüft …</p><div id="setup-panel" hidden><strong>Trainingsplan einmalig übernehmen</strong><p>Die Datenbank enthält noch keinen Trainingsplan. Du kannst den Ausgangsplan 2026/2027 übernehmen.</p><button id="setup-import" type="button">Trainingsplan jetzt übernehmen</button><p id="setup-error" role="alert"></p></div><p><a href="mein-fsv.html" style="color:#a8d0ff">Zurück zu Mein FSV</a></p></div></section><header><div><div><h1>Spielstätten Planung</h1><small>Interne Verwaltung · Trainingsplan 2026/2027 · Version 1.8.0</small></div><span class="pill" id="count">0 Einheiten</span></div></header><main>
+<section class="panel"><h2>Platzbelegung planen</h2><div class="controls"><label>Spielstätte<select id="field"><option value="igs">IGS – Kunstrasen</option><option value="rasen">Naturrasen</option><option value="kaefig">Käfig – Kleinfeld-Kunstrasen</option></select></label><label>Wochentag<select id="day"><option value="0">Montag</option><option value="1">Dienstag</option><option value="2">Mittwoch</option><option value="3">Donnerstag</option><option value="4">Freitag</option></select></label><label>Uhrzeit<select id="time"></select></label><button id="winter" type="button">🌱 Rasen geöffnet</button></div><p class="muted">Grün = Training · Gold schraffiert = Winter-Backup · Rot = echte Kapazitätsüberschreitung. Freie Teilflächen werden automatisch genutzt. Auf eine Teilfläche tippen, um sie für einen neuen Eintrag auszuwählen.</p><div id="notice" class="note" hidden></div></section>
+<div class="layout"><section class="panel"><h2 id="pitchTitle">IGS – Kunstrasen</h2><div class="pitch" id="pitch"><div class="zones" id="zones"></div><div class="goal left" aria-hidden="true"></div><div class="goal right" aria-hidden="true"></div></div><p class="foot">Großfeld: ¼ = ein Viertel, ½ = eine vollständige Hälfte bis zur Mittellinie. Käfig: linke und rechte Spielhälfte (jeweils Torlinie bis Mittellinie); Hobby = ganzer Käfig.</p></section><section class="panel"><h2>Belegung zur gewählten Uhrzeit</h2><div id="entries" class="list"></div><p id="capacity" class="muted"></p></section></div>
+<section class="panel" id="editor"><h2>Trainingseinheit anlegen / bearbeiten</h2><form id="form"><input type="hidden" id="editid"><div class="formgrid"><label>Mannschaft / Gruppe<input id="team" list="teams" required placeholder="z. B. D1"><datalist id="teams"><option>G1</option><option>G2</option><option>F1</option><option>E1</option><option>E2</option><option>E3</option><option>E4</option><option>D1</option><option>C1</option><option>C2</option><option>AH</option><option>Erste</option><option>Zweite</option><option>Hobby</option><option>Fußballschule</option><option>SWFV</option></datalist></label><label>Platz<select id="formfield"><option value="igs">IGS – Kunstrasen</option><option value="rasen">Naturrasen</option><option value="kaefig">Käfig</option></select></label><label>Tag<select id="formday"><option value="0">Montag</option><option value="1">Dienstag</option><option value="2">Mittwoch</option><option value="3">Donnerstag</option><option value="4">Freitag</option></select></label><label>Platzanteil<select id="size"><option value="1">¼ Großfeld / ½ Käfig</option><option value="2">½ Großfeld / ganzer Käfig</option><option value="4">Ganzes Großfeld</option></select></label><label>Beginn<input type="time" id="start" value="17:00" step="900" required></label><label>Ende<input type="time" id="end" value="18:30" step="900" required></label><label>Teilfläche<select id="zone"></select></label><label>Art<select id="kind"><option value="normal">Reguläres Training</option><option value="backup">Nur Winter-Backup</option><option value="other">Sonstige Belegung (z. B. Fußballschule)</option></select></label><label class="wide">Notiz<input id="note" placeholder="Optional, z. B. Fallback für Rasen"></label></div><div class="actions"><button class="green" type="submit">Einheit speichern</button><button type="button" id="reset">Neue Eingabe</button><button type="button" id="delete" hidden>Einheit löschen</button></div></form><p class="status" id="status"></p></section>
+<section class="panel" id="manage-panel"><h2>Spielstätten Planung verwalten</h2><p>Änderungen an Trainingseinheiten werden zentral in Supabase gespeichert und sind auf deinen Geräten verfügbar.</p><p class="status" id="cloud-status">Bitte anmelden.</p><button id="logout" type="button">Abmelden</button><div class="actions" hidden><button id="export" type="button">Plan als JSON sichern</button><button id="public-feed" type="button">Spielstätten-Feed (JSON) exportieren</button><button id="import" type="button">JSON-Plan importieren</button><input id="file" type="file" accept="application/json,.json" hidden><button id="seed" type="button">Ausgangsplan wiederherstellen</button></div><p class="note">Trainingsänderungen und der Wintermodus werden zentral gespeichert. Die öffentliche Spielstättenbelegung zeigt Trainingseinheiten grün an.</p></section>
+</main><script>
+(()=>{'use strict';const $=id=>document.getElementById(id), names=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag'],fields={igs:'IGS – Kunstrasen',rasen:'Naturrasen',kaefig:'Käfig – Kleinfeld-Kunstrasen'};const initial=[
+["E3", "kaefig", 0, "17:15", "19:00", 2, 0, "normal", ""],
+["F1", "kaefig", 1, "17:00", "18:45", 2, 0, "normal", ""],
+["Hobby", "kaefig", 1, "19:45", "21:15", 2, 0, "normal", ""],
+["G1", "kaefig", 2, "17:00", "18:45", 2, 0, "normal", ""],
+["E2", "kaefig", 3, "17:00", "18:45", 2, 0, "normal", ""],
+["AH", "kaefig", 3, "19:30", "21:15", 2, 0, "normal", ""],
+["Fußballschule", "kaefig", 4, "14:45", "16:00", 2, 0, "other", ""],
+["G1", "kaefig", 4, "16:15", "18:00", 1, 0, "normal", ""],
+["G2", "kaefig", 4, "16:15", "18:00", 1, 1, "normal", ""],
+["Fußballschule", "kaefig", 4, "18:00", "19:15", 2, 0, "other", ""],
+["SWFV", "igs", 0, "18:00", "19:30", 1, 0, "normal", ""],
+["C1", "igs", 0, "17:30", "19:30", 2, 0, "backup", "Rote Schrift + Schraffur laut IGS-Plan; keine zugehörige Montag-Rasenbelegung im PDF"],
+["E2", "igs", 0, "17:00", "18:45", 1, 2, "backup", "Fallback von Rasen Montag"],
+["C2", "igs", 1, "18:00", "19:45", 2, 0, "normal", ""],
+["D1", "igs", 1, "17:45", "19:30", 1, 1, "normal", ""],
+["Erste", "igs", 1, "19:30", "21:15", 2, 1, "backup", ""],
+["D1", "igs", 2, "17:45", "19:30", 1, 0, "normal", ""],
+["E1", "igs", 2, "18:15", "20:00", 1, 1, "normal", ""],
+["E4", "igs", 2, "18:15", "20:00", 1, 3, "normal", ""],
+["E3", "igs", 2, "17:15", "19:00", 1, 2, "backup", ""],
+["Zweite", "igs", 2, "19:30", "21:00", 2, 0, "backup", ""],
+["AH", "igs", 2, "19:30", "21:15", 1, 3, "normal", "Mittwochs bei Rasensperrung: bewusst gemeinsam mit der Zweiten (vorübergehende Winterausnahme)"],
+["D1", "igs", 3, "17:45", "19:30", 1, 0, "normal", ""],
+["Erste", "igs", 3, "19:30", "21:15", 2, 0, "backup", ""],
+["C2", "igs", 3, "18:00", "19:45", 2, 1, "normal", ""],
+["E1", "igs", 4, "18:15", "19:45", 1, 2, "normal", ""],
+["E4", "igs", 4, "18:15", "19:45", 1, 3, "normal", ""],
+["F1", "igs", 4, "17:00", "18:30", 1, 0, "backup", "Freitag, Fortsetzung auf Seite 2 des IGS-PDF"],
+["Zweite", "igs", 4, "19:15", "21:00", 2, 0, "backup", "Freitag, Fortsetzung auf Seite 2 des IGS-PDF"],
+["E2", "rasen", 0, "17:00", "18:45", 1, 0, "normal", ""],
+["G2", "rasen", 1, "17:00", "18:45", 1, 0, "normal", ""],
+["C1", "rasen", 1, "17:45", "19:30", 2, 1, "normal", ""],
+["Erste", "rasen", 1, "19:30", "21:15", 2, 1, "normal", ""],
+["E3", "rasen", 2, "17:15", "19:00", 1, 0, "normal", ""],
+["Zweite", "rasen", 2, "19:15", "21:00", 2, 0, "normal", ""],
+["C1", "rasen", 3, "17:45", "19:30", 2, 0, "normal", ""],
+["Erste", "rasen", 3, "19:30", "21:15", 2, 0, "normal", ""],
+["F1", "rasen", 4, "17:00", "18:45", 1, 0, "normal", ""],
+["Zweite", "rasen", 4, "19:15", "21:00", 2, 0, "normal", ""],
+["G2", "kaefig", 1, "17:00", "18:45", 1, 1, "backup", "Fallback G2 vom Naturrasen; im Käfig zeitgleich F1 – Konflikt prüfen"]
+].map((a,i)=>({id:'seed'+i,team:a[0],field:a[1],day:a[2],start:a[3],end:a[4],size:a[5],zone:a[6],kind:a[7],note:a[8]||''}));window.FSVSeedPlan=()=>structuredClone(initial);let data;try{const v=JSON.parse(localStorage.getItem('fsv_training_v10'));data=Array.isArray(v)?v:structuredClone(initial)}catch{data=structuredClone(initial)}// Einmalige Korrektur der Wochentage E1/E4 aus v1.0; andere Änderungen bleiben erhalten.
+if(!localStorage.getItem('fsv_e1e4_days_v11')){
+  for(const e of data){if(['E1','E4'].includes(e.team)&&e.field==='igs'&&e.kind==='normal'&&e.start==='18:15'&&e.end==='20:00'&&e.size===1){if(e.day===1)e.day=2;else if(e.day===3)e.day=4;}}
+  localStorage.setItem('fsv_training_v10',JSON.stringify(data));
+  localStorage.setItem('fsv_e1e4_days_v11','1');
+}
+// v1.2: korrigierte Stammdaten; bestehende selbst angelegte Einträge bleiben bestehen.
+if(!localStorage.getItem('fsv_training_migration_v12')){
+  const updated=new Map(initial.map(e=>[e.id,e]));
+  data=data.filter(e=>!e.id.startsWith('seed')||updated.has(e.id));
+  for(const e of initial){const i=data.findIndex(x=>x.id===e.id);if(i>=0)data[i]=structuredClone(e);else data.push(structuredClone(e));}
+  localStorage.setItem('fsv_training_v10',JSON.stringify(data));
+  localStorage.setItem('fsv_training_migration_v12','1');
+}
+if(!localStorage.getItem('fsv_training_migration_v13')){for(const e of data){if(e.id==='seed21'&&e.team==='AH')e.note='Mittwochs bei Rasensperrung: bewusst gemeinsam mit der Zweiten (vorübergehende Winterausnahme)';}localStorage.setItem('fsv_training_v10',JSON.stringify(data));localStorage.setItem('fsv_training_migration_v13','1');}let closed=false,selected=-1;const save=()=>{window.FSVCloud?.save(data).catch(err=>{alert('Speichern in Supabase fehlgeschlagen: '+err.message);});};const minutes=s=>Number(s.slice(0,2))*60+Number(s.slice(3,5));const active=e=>e.kind==='backup'?closed:e.field==='rasen'?!closed:true;const cells=e=>e.field==='kaefig'?(e.size>=2?[0,1]:[e.zone]):e.size===4?[0,1,2,3]:e.size===2?(e.zone<2?[0,2]:[1,3]):[e.zone];const current=()=>data.filter(e=>e.field===$('field').value&&e.day===Number($('day').value)&&active(e)&&minutes(e.start)<=minutes($('time').value)&&minutes(e.end)>minutes($('time').value));function zonesFor(){let small=$('formfield').value==='kaefig',size=Number($('size').value);$('size').options[0].text=small?'½ Käfig':'¼ Großfeld';$('size').options[1].text=small?'Ganzer Käfig':'½ Großfeld';$('size').options[2].hidden=small;if(small&&size===4){$('size').value='2';size=2}let opts=small?(size>=2?[[0,'Ganzer Käfig']]:[[0,'Linke Spielhälfte'],[1,'Rechte Spielhälfte']]):size===4?[[0,'Ganzer Platz']]:size===2?[[0,'Linke Spielfeldhälfte'],[1,'Rechte Spielfeldhälfte']]:[[0,'Viertel 1 (links oben)'],[1,'Viertel 2 (rechts oben)'],[2,'Viertel 3 (links unten)'],[3,'Viertel 4 (rechts unten)']];let prev=$('zone').value;$('zone').innerHTML='';opts.forEach(([v,t])=>{let o=document.createElement('option');o.value=v;o.textContent=t;$('zone').append(o)});if(opts.some(x=>String(x[0])===prev))$('zone').value=prev}
+const permittedShare=(a,b)=>closed&&a.field==='igs'&&b.field==='igs'&&a.day===2&&b.day===2&&[a.team,b.team].sort().join('|')==='AH|Zweite';
+function render(){let field=$('field').value,small=field==='kaefig',count=small?2:4,entries=current(),occ=Array.from({length:count},()=>[]),positions=new Map();
+// Halbfelder zuerst verteilen; nie zwei Viertel über die Mittellinie kombinieren.
+const sorted=[...entries].sort((a,b)=>b.size-a.size||minutes(a.start)-minutes(b.start)||a.team.localeCompare(b.team));
+for(const e of sorted){const candidates=small?(e.size>=2?[[0,1]]:[[0],[1]]):e.size===4?[[0,1,2,3]]:e.size===2?[[0,2],[1,3]]:[[0],[1],[2],[3]];const preferred=cells(e),ordered=[...candidates].sort((a,b)=>Number(b.join(',')===preferred.join(','))-Number(a.join(',')===preferred.join(',')));const sharing=e.team==='AH'&&closed&&e.field==='igs'&&e.day===2?entries.find(x=>x.team==='Zweite'):null;const shareCells=sharing&&positions.get(sharing.id);const picked=shareCells?[shareCells[0]]:(ordered.find(cs=>cs.every(c=>occ[c].length===0))||ordered[0]);positions.set(e.id,picked);picked.forEach(c=>occ[c].push(e));}
+$('pitch').classList.toggle('small',small);$('pitchTitle').textContent=fields[field]+' · '+names[Number($('day').value)]+' '+$('time').value;$('zones').replaceChildren();for(let i=0;i<count;i++){let z=document.createElement('button');z.type='button';z.className='zone'+(occ[i].length?' occupied':'')+(occ[i].some(e=>e.kind==='backup')?' backup':'')+(occ[i].length>1&&!occ[i].every((e,j)=>occ[i].every((f,k)=>j===k||permittedShare(e,f)))?' conflict':'')+(selected===i?' selected':'')+(closed&&field==='rasen'?' closed':'');let title=document.createElement('strong');title.textContent=closed&&field==='rasen'?'GESPERRT':occ[i].length?occ[i].map(e=>e.team).join(' + '):'Frei';let sub=document.createElement('span');sub.textContent=small?(i===0?'Linke Spielhälfte':'Rechte Spielhälfte'):'Viertel '+(i+1);z.append(title,sub);z.onclick=()=>{selected=i;$('formfield').value=field;$('formday').value=$('day').value;zonesFor();if([...$('zone').options].some(o=>Number(o.value)===i))$('zone').value=String(i);$('start').value=$('time').value;render();$('editor').scrollIntoView({behavior:'smooth',block:'start'})};$('zones').append(z)}$('entries').replaceChildren();if(!entries.length){let p=document.createElement('p');p.className='muted';p.textContent='Zu dieser Uhrzeit keine Einträge.';$('entries').append(p)}entries.forEach(e=>{let div=document.createElement('div');div.className='entry';let left=document.createElement('div');let b=document.createElement('b');b.textContent=e.team+(e.kind==='backup'?' · Backup':'');let sm=document.createElement('small');sm.textContent=e.start+'–'+e.end+' · '+(e.field==='kaefig'?(e.size>=2?'ganzer Käfig':'½ Käfig'):(e.size===1?'¼':e.size===2?'½':'ganzer')+' Platz')+(positions.get(e.id).join(',')!==cells(e).join(',')?' · automatisch freie Fläche':'');left.append(b,sm);let btn=document.createElement('button');btn.textContent='Bearbeiten';btn.onclick=()=>edit(e);div.append(left,btn);$('entries').append(div)});let conflicts=occ.filter(a=>a.length>1&&!a.every((e,j)=>a.every((f,k)=>j===k||permittedShare(e,f)))).length;$('capacity').textContent=conflicts?'⚠ '+conflicts+' überlappende Teilfläche(n) – bitte prüfen.':occ.filter(a=>a.length).length+'/'+count+' Teilflächen belegt'+(closed&&field==='igs'&&Number($('day').value)===2&&entries.some(e=>e.team==='AH')&&entries.some(e=>e.team==='Zweite')?' · AH und Zweite teilen sich bewusst eine Teilfläche (Winterausnahme).':'');$('capacity').className=conflicts?'warn':'muted';$('count').textContent=data.length+' Einheiten';$('winter').textContent=closed?'❄️ Rasen geschlossen':'🌱 Rasen geöffnet';$('winter').className=closed?'red':'green';$('notice').hidden=!closed;$('notice').textContent=closed?'Winterbetrieb aktiv: Reguläre Raseneinheiten ausgeblendet; angelegte Backup-Einheiten werden eingeblendet.':' '}
+function reset(){ HTMLFormElement.prototype.reset.call($('form'));$('editid').value='';$('delete').hidden=true;$('formfield').value=$('field').value;$('formday').value=$('day').value;$('start').value=$('time').value;$('end').value='18:30';zonesFor();$('status').textContent=''}function edit(e){$('editid').value=e.id;$('team').value=e.team;$('formfield').value=e.field;$('formday').value=String(e.day);$('size').value=String(e.size);zonesFor();$('zone').value=String(e.zone);$('start').value=e.start;$('end').value=e.end;$('kind').value=e.kind;$('note').value=e.note||'';$('delete').hidden=false;$('status').textContent='Eintrag „'+e.team+'“ bearbeiten';$('editor').scrollIntoView({behavior:'smooth'})}
+$('form').onsubmit=ev=>{ev.preventDefault();let e={id:$('editid').value||'id'+Date.now()+Math.random().toString(36).slice(2),team:$('team').value.trim(),field:$('formfield').value,day:Number($('formday').value),start:$('start').value,end:$('end').value,size:Number($('size').value),zone:Number($('zone').value),kind:$('kind').value,note:$('note').value.trim()};if(minutes(e.end)<=minutes(e.start)){alert('Das Ende muss nach dem Beginn liegen.');return}if(e.field==='kaefig'&&e.size===4)e.size=2;let clash=data.filter(x=>x.id!==e.id&&x.field===e.field&&x.day===e.day&&(x.kind===e.kind||x.kind==='normal'||e.kind==='normal')&&minutes(x.start)<minutes(e.end)&&minutes(x.end)>minutes(e.start)&&cells(x).some(c=>cells(e).includes(c))&&!permittedShare(x,e));if(clash.length&&!confirm('Achtung: Überlappung mit '+clash.map(x=>x.team).join(', ')+'. Trotzdem speichern?'))return;let index=data.findIndex(x=>x.id===e.id);if(index<0)data.push(e);else data[index]=e;save();$('field').value=e.field;$('day').value=String(e.day);$('time').value=e.start;selected=-1;render();reset();$('status').textContent='Speicherung in Supabase wird durchgeführt …'};$('delete').onclick=()=>{let id=$('editid').value;if(id&&confirm('Diese Trainingseinheit wirklich löschen?')){data=data.filter(e=>e.id!==id);save();reset();render()}};$('reset').onclick=reset;['field','day','time'].forEach(id=>$(id).addEventListener('change',()=>{selected=-1;render()}));$('winter').onclick=()=>{closed=!closed;render();save()};$('formfield').onchange=zonesFor;$('size').onchange=zonesFor;for(let t=14*60+45;t<=21*60+15;t+=15){let o=document.createElement('option');o.value=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');o.textContent=o.value;$('time').append(o)}$('time').value='18:00';$('export').onclick=()=>{let blob=new Blob([JSON.stringify({version:1,entries:data},null,2)],{type:'application/json'});let url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='fsv-trainingsplan.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),500)};$('import').onclick=()=>$('file').click();$('file').onchange=async ev=>{try{let x=JSON.parse(await ev.target.files[0].text());if(!Array.isArray(x.entries)||!x.entries.every(e=>e.id&&e.team&&fields[e.field]&&Number.isInteger(e.day)&&e.start&&e.end))throw Error('Ungültiges Dateiformat');if(confirm('Aktuellen Browser-Trainingsplan durch Import ersetzen?')){data=x.entries;save();render();reset()}}catch(e){alert('Import fehlgeschlagen: '+e.message)}ev.target.value=''};$('seed').onclick=()=>{if(confirm('Alle eigenen Änderungen verwerfen und Ausgangsplan wiederherstellen?')){data=structuredClone(initial);save();render();reset()}};window.FSVPlanner={load(entries){data=structuredClone(entries);render();reset();},seed(){return structuredClone(initial);},snapshot(){return structuredClone(data);},winter(){return closed;},setWinter(value){closed=Boolean(value);render();}};zonesFor();render();reset();
+})();</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(function(){
+'use strict';
+const URL='https://ibhtvjaawinpcwvbwzct.supabase.co';
+const KEY='sb_publishable_omPVDjNvHQ5SULxKhJQqUA_-rCJ0PL3';
+const $=id=>document.getElementById(id);
+const state={client:null,user:null,ready:false,queue:Promise.resolve()};
+function message(s){$('cloud-status').textContent=s;}
+function error(s){$('access-error').textContent=s;}
+async function init(){
+ if(!window.supabase){error('Supabase-Bibliothek nicht geladen. Bitte Internetverbindung prüfen.');return;}
+ state.client=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+ $('logout').onclick=async()=>{await state.client.auth.signOut();location.replace('mein-fsv-login.html');};
+ const {data:{user},error:authError}=await state.client.auth.getUser();
+ if(authError||!user){location.replace('mein-fsv-login.html');return;}
+ const {data:profile,error:profileError}=await state.client.from('mein_fsv_users').select('role,active').eq('id',user.id).maybeSingle();
+ if(profileError||!profile||!profile.active||profile.role!=='admin'){
+   error('Zugriff verweigert: Diese Verwaltung ist nur für Administratoren freigeschaltet.');
+   return;
+ }
+ try{await load(user);}catch(e){error('Ladefehler: '+e.message);}
+
+}
+async function load(user){
+ state.ready=false;state.user=user;error('Lade Trainingsplan …');
+ const {data, error:err}=await state.client.from('trainingsplanung').select('plan,winter_closed').eq('owner_id',user.id).maybeSingle();
+ if(err){error('Datenbank nicht eingerichtet oder Zugriff verweigert: '+err.message);return;}
+ if(!data){
+   error('');
+   
+   $('setup-panel').hidden=false;
+   $('setup-error').textContent='';
+   $('setup-import').onclick=async()=>{
+     const btn=$('setup-import');btn.disabled=true;btn.textContent='Übernehme Trainingsplan …';
+     try{
+       const seed=window.FSVPlanner?.seed?.() ?? window.FSVSeedPlan?.();
+       if(!Array.isArray(seed)||seed.length===0)throw new Error('Ausgangsplan konnte nicht geladen werden. Bitte Seite neu laden.');
+       const {error:insertError}=await state.client.from('trainingsplanung').insert({owner_id:user.id,plan:seed});
+       if(insertError)throw insertError;
+       if(window.FSVPlanner?.load)window.FSVPlanner.load(seed);else throw new Error('Trainingsplan wurde gespeichert, aber die Anzeige konnte nicht initialisiert werden. Bitte Seite neu laden.');
+       state.ready=true;document.body.classList.add('unlocked');
+       $('setup-panel').hidden=true;
+       message('✓ Trainingsplan übernommen und in Supabase gespeichert.');error('');
+     }catch(e){$('setup-error').textContent='Übernahme fehlgeschlagen: '+e.message;}
+     finally{btn.disabled=false;btn.textContent='Trainingsplan jetzt übernehmen';}
+   };
+   return;
+ }else{
+   if(!Array.isArray(data.plan)){error('Ungültiges Datenformat in Supabase.');return;}
+   if(!window.FSVPlanner?.load)throw new Error('Die grafische Trainingsverwaltung wurde nicht initialisiert. Bitte Seite neu laden.');
+   window.FSVPlanner.load(data.plan);window.FSVPlanner.setWinter?.(data.winter_closed);
+ }
+ state.ready=true;document.body.classList.add('unlocked');$('setup-panel').hidden=true;message('✓ Mit Supabase verbunden. Änderungen werden zentral gespeichert.');error('');
+}
+window.FSVCloud={save(entries){
+ if(!state.ready||!state.user)return Promise.reject(new Error('Nicht mit Supabase verbunden.'));
+ const snapshot=structuredClone(entries);
+ const job=state.queue.catch(()=>{}).then(async()=>{
+   message('Speichere Änderungen in Supabase …');
+   const {data,error:err}=await state.client.from('trainingsplanung').update({plan:snapshot,winter_closed:Boolean(window.FSVPlanner?.winter?.()),updated_at:new Date().toISOString()}).eq('owner_id',state.user.id).select('owner_id');
+   if(err)throw err;
+   if(!data||data.length!==1)throw new Error('Keine Datenbankzeile aktualisiert.');
+   message('✓ In Supabase gespeichert · '+new Date().toLocaleTimeString('de-DE'));
+   $('status').textContent='✓ Trainingseinheit zentral gespeichert.';
+ });
+ state.queue=job;return job;
+}};
+init().catch(e=>error('Verbindungsfehler: '+e.message));
+})();
+</script></body></html>
