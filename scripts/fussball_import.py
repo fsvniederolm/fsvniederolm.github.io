@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Import publicly displayed team match plans; fail closed if page layout changes."""
-import os, re, sys, hashlib, logging
+import os, re, sys, hashlib, logging, json
 from datetime import datetime, date, timedelta
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 import requests
 from bs4 import BeautifulSoup
 
@@ -107,6 +107,7 @@ def main():
     endpoint,
    ]
    games=[];best_games=[]
+   os.makedirs('diagnose', exist_ok=True)
    for idx,candidate in enumerate(candidates,1):
     r=sess.get(candidate,timeout=35)
     soup=BeautifulSoup(r.text,'html.parser')
@@ -115,6 +116,20 @@ def main():
     title=text(soup.title)[:100]
     log.info('%s: Abruf %s HTTP=%s Bytes=%s Tabellen=%s Vereinsnamen=%s Titel=%r URL=%s',
              team,idx,r.status_code,len(r.content),len(tables),len(club_names),title,r.url)
+    # HTML diagnosis for E2 and C1; downloaded as a private workflow artifact.
+    if team in ('E2','C1'):
+     path=f'diagnose/{team}_abruf_{idx}.html'
+     with open(path,'w',encoding='utf-8') as fh: fh.write(r.text)
+     rows=soup.select('tr')
+     samples=[]
+     for row in rows:
+      label=text(row)
+      if 'Nieder-Olm' in label or 'Nieder Olm' in label:
+       samples.append({'classes':row.get('class',[]),'text':label[:400], 'html':str(row)[:2200]})
+      if len(samples)>=8:break
+     with open(f'diagnose/{team}_abruf_{idx}_struktur.json','w',encoding='utf-8') as fh:
+      json.dump({'status':r.status_code,'bytes':len(r.content),'title':title,'table_count':len(tables),'row_count':len(rows),'sample_rows':samples},fh,ensure_ascii=False,indent=2)
+     log.info('%s: Diagnose-HTML und Zeilenstruktur gespeichert (Abruf %s)',team,idx)
     if r.status_code != 200:
      log.warning('%s: Abruf %s lieferte HTTP %s',team,idx,r.status_code)
      continue
