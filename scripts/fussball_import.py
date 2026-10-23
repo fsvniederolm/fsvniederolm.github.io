@@ -154,7 +154,7 @@ def main():
    for offset in range(0,len(games),100):
     batch=games[offset:offset+100]
     response=sess.post(url+'/rest/v1/team_spiele?on_conflict=team,quelle_id',json=batch,headers={
-     'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json',
+     'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json','Accept':'application/json',
      'Prefer':'resolution=merge-duplicates,return=minimal'
     },timeout=35)
     if not response.ok:raise RuntimeError(f'Supabase {response.status_code}: {response.text[:300]}')
