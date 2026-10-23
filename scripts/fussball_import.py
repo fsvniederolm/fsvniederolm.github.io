@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Import publicly displayed team match plans; fail closed if page layout changes."""
 import os, re, sys, hashlib, logging
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from urllib.parse import quote
 import requests
 from bs4 import BeautifulSoup
@@ -98,9 +98,33 @@ def main():
  for team,tid in TEAMS.items():
   endpoint=f'{BASE}/ajax.team.matchplan/-/mime-type/HTML/show-venues/true/team-id/{quote(tid)}'
   try:
-   r=sess.get(endpoint,timeout=35);r.raise_for_status()
-   games=parse(r.text,team,tid)
-   if not games:raise ValueError('Keine Spiele erkannt; Import für dieses Team aus Sicherheitsgründen abgebrochen')
+   today=date.today()
+   start=(today-timedelta(days=120)).isoformat()
+   end=(today+timedelta(days=180)).isoformat()
+   candidates=[
+    f'{BASE}/ajax.team.matchplan/-/datum-von/{start}/datum-bis/{end}/max/300/match-type/-1/wettkampftyp/-1/show-venues/true/mime-type/HTML/team-id/{quote(tid)}',
+    endpoint,
+   ]
+   games=[]
+   for idx,candidate in enumerate(candidates,1):
+    r=sess.get(candidate,timeout=35)
+    soup=BeautifulSoup(r.text,'html.parser')
+    tables=soup.select('.club-matchplan-table, #id-team-matchplan-table, .matchplan-table')
+    club_names=soup.select('.club-name')
+    title=text(soup.title)[:100]
+    log.info('%s: Abruf %s HTTP=%s Bytes=%s Tabellen=%s Vereinsnamen=%s Titel=%r URL=%s',
+             team,idx,r.status_code,len(r.content),len(tables),len(club_names),title,r.url)
+    if r.status_code != 200:
+     log.warning('%s: Abruf %s lieferte HTTP %s',team,idx,r.status_code)
+     continue
+    try:
+     games=parse(r.text,team,tid)
+    except ValueError as exc:
+     log.warning('%s: Abruf %s: %s',team,idx,exc)
+     continue
+    log.info('%s: Abruf %s erkannte %s Spiele',team,idx,len(games))
+    if games:break
+   if not games:raise ValueError('Keine Spiele erkannt. Bitte HTTP/Tabellen/Vereinsnamen-Diagnose oben prüfen; kein Schreiben durchgeführt')
    for offset in range(0,len(games),100):
     batch=games[offset:offset+100]
     response=sess.post(url+'/rest/v1/team_spiele?on_conflict=team,quelle_id',json=batch,headers={
