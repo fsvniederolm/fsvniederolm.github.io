@@ -148,7 +148,17 @@ def parse(html, team, team_id, session):
             if uid in seen:
                 continue
             seen.add(uid)
-            score_txt = text(tr.select_one('td.column-score'))
+            score_cell = tr.select_one('td.column-score')
+            # FUSSBALL.DE shows rescheduled matches at the ORIGINAL date too.
+            # Such rows contain an info-text with the new date, not a result.
+            # Never fetch the detail result and attach it to the old date.
+            relocation = text(score_cell.select_one('.info-text')) if score_cell else ''
+            relocated_to = parse_date(relocation)
+            if relocated_to and relocated_to != current_date:
+                log.info('%s: verlegten Alttermin %s -> %s übersprungen: %s gegen %s',
+                         team, current_date, relocated_to, heim, gast)
+                continue
+            score_txt = text(score_cell)
             low = score_txt.lower()
             cancelled = any(x in low for x in ('absetzung', 'abgesetzt', 'abgesagt', 'ausfall', 'verlegt'))
             goals = (None, None) if cancelled else parse_score(score_txt)
