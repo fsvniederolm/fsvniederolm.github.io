@@ -87,10 +87,14 @@ def parse(html, team, team_id):
                 continue
             game_link = tr.select_one('a[href*="/spiel/"]')
             href = game_link.get('href', '') if game_link else ''
-            match_id = re.search(r'/spiel/([A-Za-z0-9]+)', href)
-            uid = match_id[1] if match_id else hashlib.sha256(
-                (current_date + '|' + heim + '|' + gast + '|' + team).encode()
-            ).hexdigest()[:32]
+            # FUSSBALL.DE links may be /spiel/<slug>/spiel-id/<ID>/.
+            # The slug (e.g. 'fsv') is NOT a unique match identifier.
+            match_id = re.search(r'/spiel-id/([A-Za-z0-9]+)(?:/|$)', href)
+            # A deterministic globally unique fallback works with BOTH database
+            # constraints: UNIQUE(quelle_id) and UNIQUE(team, quelle_id).
+            uid = ('fd-' + match_id.group(1)) if match_id else 'fs-' + hashlib.sha256(
+                ('|'.join([team, current_date, current_time or '', heim, gast, current_comp or ''])).encode('utf-8')
+            ).hexdigest()[:40]
             if uid in seen:
                 continue
             seen.add(uid)
