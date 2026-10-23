@@ -40,21 +40,22 @@ def parse_score(raw):
 
 def parse(html,team,team_id):
  soup=BeautifulSoup(html,'html.parser')
- table=soup.select_one('.club-matchplan-table, #id-team-matchplan-table, .matchplan-table')
- if not table: raise ValueError('Spielplan-Tabelle nicht gefunden; HTML-Struktur oder Endpoint prüfen')
- rows=table.select('tr')
+ tables=soup.select('.club-matchplan-table, #id-team-matchplan-table, .matchplan-table')
+ if not tables: raise ValueError('Spielplan-Tabelle nicht gefunden; HTML-Struktur oder Endpoint prüfen')
+ rows=[tr for table in tables for tr in table.select('tr')]
+ log.info('%s: Parser: %s Tabellen, %s Zeilen',team,len(tables),len(rows))
  found=[]; context=''; seen=set()
  for tr in rows:
   classes=' '.join(tr.get('class',[]))
-  if 'row-competition' in classes:
+  if any(x in classes for x in ('row-competition','row-group','row-header')):
    context=text(tr)
    continue
-  clubs=[text(x) for x in tr.select('.club-name') if text(x)]
+  clubs=[text(x) for x in tr.select('.club-name, .team-name') if text(x)]
   if len(clubs)<2:continue
   heim,gast=clubs[:2]
   if not any(re.search(r'FSV\s+Nieder\s*[-–]?\s*Olm',x,re.I) for x in (heim,gast)):
    continue
-  dateval=parse_date(context+' '+text(tr))
+  dateval=parse_date(text(tr)) or parse_date(context)
   if not dateval:continue
   match_link=tr.select_one('a[href*="/spiel/"]') or tr.select_one('a[href*="spiel-id/"]')
   href=match_link.get('href','') if match_link else ''
@@ -94,7 +95,7 @@ def main():
  key=os.environ.get('SUPABASE_SERVICE_ROLE_KEY','')
  if not url or not key:raise RuntimeError('SUPABASE_URL und SUPABASE_SERVICE_ROLE_KEY als Secrets setzen')
  sess=requests.Session();sess.headers.update(HEADERS)
- imported=0; failed=[]
+ imported=0; failed=[];collected={}
  for team,tid in TEAMS.items():
   endpoint=f'{BASE}/ajax.team.matchplan/-/mime-type/HTML/show-venues/true/team-id/{quote(tid)}'
   try:
@@ -105,7 +106,7 @@ def main():
     f'{BASE}/ajax.team.matchplan/-/datum-von/{start}/datum-bis/{end}/max/300/match-type/-1/wettkampftyp/-1/show-venues/true/mime-type/HTML/team-id/{quote(tid)}',
     endpoint,
    ]
-   games=[]
+   games=[];best_games=[]
    for idx,candidate in enumerate(candidates,1):
     r=sess.get(candidate,timeout=35)
     soup=BeautifulSoup(r.text,'html.parser')
@@ -123,20 +124,24 @@ def main():
      log.warning('%s: Abruf %s: %s',team,idx,exc)
      continue
     log.info('%s: Abruf %s erkannte %s Spiele',team,idx,len(games))
-    if games:break
-   if not games:raise ValueError('Keine Spiele erkannt. Bitte HTTP/Tabellen/Vereinsnamen-Diagnose oben prüfen; kein Schreiben durchgeführt')
-   for offset in range(0,len(games),100):
-    batch=games[offset:offset+100]
-    response=sess.post(url+'/rest/v1/team_spiele?on_conflict=team,quelle_id',json=batch,headers={
-     'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json',
-     'Prefer':'resolution=merge-duplicates,return=minimal'
-    },timeout=35)
-    if not response.ok:raise RuntimeError(f'Supabase {response.status_code}: {response.text[:300]}')
-   imported+=len(games)
-   log.info('%s: %s Spiele übernommen',team,len(games))
+    if len(games)>len(best_games):best_games=games
+   games=best_games
+   if len(games)<3:raise ValueError(f'Nur {len(games)} Spiele erkannt; Import sicherheitshalber abgebrochen (mindestens 3 erwartet)')
+   collected[team]=games
+   log.info('%s: %s Spiele für Import vorgemerkt',team,len(games))
   except Exception as exc:
    failed.append(team);log.error('%s: %s',team,exc)
- if failed:raise RuntimeError('Import nicht vollständig. Fehlerhafte Teams: '+', '.join(failed))
+ if failed:raise RuntimeError('Keine Daten geschrieben. Fehlerhafte Teams: '+', '.join(failed))
+ for team,games in collected.items():
+  for offset in range(0,len(games),100):
+   batch=games[offset:offset+100]
+   response=sess.post(url+'/rest/v1/team_spiele?on_conflict=team,quelle_id',json=batch,headers={
+    'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json',
+    'Prefer':'resolution=merge-duplicates,return=minimal'
+   },timeout=35)
+   if not response.ok:raise RuntimeError(f'Supabase {response.status_code}: {response.text[:300]}')
+  imported+=len(games)
+  log.info('%s: %s Spiele übernommen',team,len(games))
  log.info('Fertig: %s Spiele aus %s Teams.',imported,len(TEAMS))
 
 if __name__=='__main__':
