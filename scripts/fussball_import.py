@@ -4,6 +4,8 @@ import os, re, sys, hashlib, logging
 from datetime import datetime, date, timedelta
 from urllib.parse import quote
 import requests
+from io import BytesIO
+from fontTools.ttLib import TTFont
 from bs4 import BeautifulSoup
 
 TEAMS = {
@@ -38,7 +40,55 @@ def parse_score(raw):
  m=re.search(r'(?<!\d)(\d{1,2})\s*[:\-]\s*(\d{1,2})(?!\d)',raw)
  return (int(m[1]),int(m[2])) if m else (None,None)
 
-def parse(html, team, team_id):
+DIGITS = {'zero':'0','one':'1','two':'2','three':'3','four':'4','five':'5','six':'6','seven':'7','eight':'8','nine':'9'}
+FONT_CACHE = {}
+
+def decode_obfuscated(el, session):
+    """Decode FUSSBALL.DE per-page obfuscation via the original font cmap."""
+    if el is None:
+        return None
+    font_id = el.get('data-obfuscation')
+    raw = el.get_text('', strip=True)
+    if not font_id:
+        return raw if raw.isdigit() else None
+    if not re.fullmatch(r'[a-z0-9]{5,20}', font_id):
+        return None
+    if font_id not in FONT_CACHE:
+        font_url = f'{BASE}/export.fontface/-/format/ttf/id/{font_id}/type/font'
+        response = session.get(font_url, timeout=25)
+        response.raise_for_status()
+        if len(response.content) > 1_000_000:
+            raise ValueError('Unerwartet große Schriftdatei')
+        cmap = TTFont(BytesIO(response.content)).getBestCmap()
+        FONT_CACHE[font_id] = {code: DIGITS[name] for code, name in cmap.items() if name in DIGITS}
+    decoded = ''.join(FONT_CACHE[font_id].get(ord(ch), '?') for ch in raw)
+    return decoded if decoded.isdigit() else None
+
+def score_from_element(root, session):
+    left = root.select_one('.score-left')
+    right = root.select_one('.score-right')
+    if left is None or right is None:
+        return None
+    a = decode_obfuscated(left, session)
+    b = decode_obfuscated(right, session)
+    if a is None or b is None:
+        return None
+    return int(a), int(b)
+
+def detail_score(url, session):
+    """Only use a real final result from a match detail page."""
+    if not url.startswith(BASE + '/spiel/'):
+        return None
+    response = session.get(url, timeout=30)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, 'html.parser')
+    for el in soup.select('.end-result'):
+        result = score_from_element(el, session)
+        if result is not None:
+            return result
+    return None
+
+def parse(html, team, team_id, session):
     """FUSSBALL.DE uses separate headline, competition, fixture and venue rows."""
     soup = BeautifulSoup(html, 'html.parser')
     tables = soup.select('table.table-full-width, .club-matchplan-table, #id-team-matchplan-table, .matchplan-table')
@@ -102,6 +152,21 @@ def parse(html, team, team_id):
             low = score_txt.lower()
             cancelled = any(x in low for x in ('absetzung', 'abgesetzt', 'abgesagt', 'ausfall', 'verlegt'))
             goals = (None, None) if cancelled else parse_score(score_txt)
+            if not cancelled and current_date <= date.today().isoformat():
+                # Prefer the page-specific font; avoid accepting dates or other numbers as scores.
+                try:
+                    decoded = score_from_element(tr.select_one('td.column-score'), session)
+                    if decoded is not None:
+                        goals = decoded
+                except Exception as exc:
+                    log.warning('%s: Schrift-Entschlüsselung fehlgeschlagen: %s', team, exc)
+                if goals[0] is None and href:
+                    try:
+                        detail = detail_score(href if href.startswith('http') else BASE + href, session)
+                        if detail is not None:
+                            goals = detail
+                    except Exception as exc:
+                        log.warning('%s: Spiel-Detail nicht lesbar (%s): %s', team, href, exc)
             status = ('abgesetzt' if cancelled else
                       'beendet' if goals[0] is not None else 'angesetzt')
             event = {
@@ -148,7 +213,7 @@ def main():
      log.warning('%s: Abruf %s lieferte HTTP %s',team,idx,r.status_code)
      continue
     try:
-     games=parse(r.text,team,tid)
+     games=parse(r.text,team,tid,sess)
     except ValueError as exc:
      log.warning('%s: Abruf %s: %s',team,idx,exc)
      continue
