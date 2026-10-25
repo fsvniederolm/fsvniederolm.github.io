@@ -2,7 +2,7 @@ name: FUSSBALL.DE Teamplan Sync
 on:
   workflow_dispatch:
   schedule:
-    - cron: '7 * * * *'
+    - cron: '23 * * * *'
 permissions:
   contents: read
 jobs:
