@@ -246,6 +246,50 @@ def cleanup_stale_reschedules(sess, url, key, team, games):
                  team, row['datum'], row['anstoss'], new['anstoss'], row['heim'], row['gast'])
     return removed
 
+def cleanup_cancelled_games(sess, url, key, team, games):
+    """Remove confirmed cancelled fixtures from DB, never store them as upcoming.
+
+    Match either the same source ID or the same teams/date (when unique).
+    Avoid deleting another genuine fixture when multiple same-day games exist.
+    """
+    from collections import Counter
+    cancelled = [g for g in games if g['status'] == 'abgesetzt']
+    if not cancelled:
+        return 0
+    headers = {'apikey': key, 'Authorization': 'Bearer ' + key, 'Accept': 'application/json'}
+    counts = Counter((g['datum'], g['heim'].casefold(), g['gast'].casefold()) for g in games)
+    removed = 0
+    for game in cancelled:
+        # Do not remove a live replacement on the same date.
+        ident = (game['datum'], game['heim'].casefold(), game['gast'].casefold())
+        if counts[ident] != 1:
+            log.warning('%s: Absetzung mehrdeutig, keine Löschung: %s %s gegen %s', team, *ident)
+            continue
+        resp = sess.get(url + '/rest/v1/team_spiele', params={
+            'select': 'team,quelle_id,datum,anstoss,heim,gast,status',
+            'team': 'eq.' + team, 'datum': 'eq.' + game['datum'], 'limit': '200'
+        }, headers=headers, timeout=35)
+        resp.raise_for_status()
+        rows = resp.json()
+        if len(rows) >= 200:
+            raise RuntimeError('Absetzungsbereinigung abgebrochen: zu viele DB-Zeilen')
+        for row in rows:
+            if (row['quelle_id'] != game['quelle_id'] and
+                (row.get('heim') or '').casefold() != game['heim'].casefold()):
+                continue
+            if (row['quelle_id'] != game['quelle_id'] and
+                (row.get('gast') or '').casefold() != game['gast'].casefold()):
+                continue
+            resp = sess.delete(url + '/rest/v1/team_spiele', params={
+                'team': 'eq.' + team, 'quelle_id': 'eq.' + row['quelle_id'],
+                'datum': 'eq.' + row['datum']
+            }, headers={**headers, 'Prefer': 'return=minimal'}, timeout=35)
+            resp.raise_for_status()
+            removed += 1
+            log.info('%s: abgesetztes Spiel entfernt: %s %s gegen %s (ID %s)',
+                     team, row['datum'], row['heim'], row['gast'], row['quelle_id'])
+    return removed
+
 def main():
  logging.basicConfig(level=logging.INFO,format='%(levelname)s %(message)s')
  url=os.environ.get('SUPABASE_URL','').rstrip('/')
@@ -283,8 +327,9 @@ def main():
     log.info('%s: Abruf %s erkannte %s Spiele',team,idx,len(games))
     if games:break
    if not games:raise ValueError('Keine Spiele erkannt. Bitte HTTP/Tabellen/Vereinsnamen-Diagnose oben prüfen; kein Schreiben durchgeführt')
-   for offset in range(0,len(games),100):
-    batch=games[offset:offset+100]
+   active_games=[g for g in games if g['status'] != 'abgesetzt']
+   for offset in range(0,len(active_games),100):
+    batch=active_games[offset:offset+100]
     response=sess.post(url+'/rest/v1/team_spiele?on_conflict=team,quelle_id',json=batch,headers={
      'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json','Accept':'application/json',
      'Prefer':'resolution=merge-duplicates,return=minimal'
@@ -292,8 +337,9 @@ def main():
     if not response.ok:raise RuntimeError(f'Supabase {response.status_code}: {response.text[:300]}')
    # Only after a successful upsert; errors here fail the workflow visibly.
    cleanup_stale_reschedules(sess,url,key,team,games)
+   cleanup_cancelled_games(sess,url,key,team,games)
    imported+=len(games)
-   log.info('%s: %s Spiele übernommen',team,len(games))
+   log.info('%s: %s aktive Spiele übernommen, %s Absetzungen erkannt',team,len(active_games),len(games)-len(active_games))
   except Exception as exc:
    failed.append(team);log.error('%s: %s',team,exc)
  if failed:raise RuntimeError('Import nicht vollständig. Fehlerhafte Teams: '+', '.join(failed))
