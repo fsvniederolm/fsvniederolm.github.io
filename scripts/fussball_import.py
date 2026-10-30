@@ -193,6 +193,59 @@ def parse(html, team, team_id, session):
             pending = event
     return found
 
+def cleanup_stale_reschedules(sess, url, key, team, games):
+    """Remove obsolete synthetic IDs only when the current source is unambiguous.
+
+    A genuine second match on the same day is never removed if it still appears
+    in the current FUSSBALL.DE matchplan. No cleanup on partial/failed imports.
+    """
+    from collections import defaultdict
+    current = defaultdict(list)
+    for game in games:
+        if game['status'] != 'abgesetzt':
+            current[(game['datum'], game['heim'].casefold(), game['gast'].casefold())].append(game)
+    # Only compare dates in the imported source. Never delete outside its coverage.
+    dates = sorted({g['datum'] for g in games})
+    if not dates:
+        return 0
+    headers = {'apikey': key, 'Authorization': 'Bearer ' + key, 'Accept': 'application/json'}
+    resp = sess.get(url + '/rest/v1/team_spiele', params={
+        'select': 'team,quelle_id,datum,anstoss,heim,gast,status',
+        'team': 'eq.' + team, 'datum': 'gte.' + dates[0],
+        'order': 'datum.asc', 'limit': '1000'
+    }, headers=headers, timeout=35)
+    resp.raise_for_status()
+    existing = resp.json()
+    if len(existing) >= 1000:
+        log.warning('%s: Bereinigung übersprungen (Ergebnislimit erreicht)', team)
+        return 0
+    current_ids = {g['quelle_id'] for g in games}
+    removed = 0
+    for row in existing:
+        key_tuple = (row['datum'], (row.get('heim') or '').casefold(), (row.get('gast') or '').casefold())
+        matches = current.get(key_tuple, [])
+        # Exactly one fixture in current source; otherwise possible double-header.
+        if len(matches) != 1 or row['quelle_id'] in current_ids:
+            continue
+        new = matches[0]
+        # Only synthetic IDs that encode the old kickoff. Never remove stable match IDs.
+        if not str(row['quelle_id']).startswith('fs-') or not str(new['quelle_id']).startswith('fs-'):
+            continue
+        if not row.get('anstoss') or not new.get('anstoss') or row['anstoss'] == new['anstoss']:
+            continue
+        # Restrict to upcoming and very recent games; protect historical archives.
+        if row['datum'] < (date.today() - timedelta(days=7)).isoformat():
+            continue
+        delete = sess.delete(url + '/rest/v1/team_spiele', params={
+            'team': 'eq.' + team, 'quelle_id': 'eq.' + row['quelle_id'],
+            'datum': 'eq.' + row['datum'], 'anstoss': 'eq.' + row['anstoss']
+        }, headers={**headers, 'Prefer': 'return=minimal'}, timeout=35)
+        delete.raise_for_status()
+        removed += 1
+        log.info('%s: veralteten Termin entfernt: %s %s -> %s, %s gegen %s',
+                 team, row['datum'], row['anstoss'], new['anstoss'], row['heim'], row['gast'])
+    return removed
+
 def main():
  logging.basicConfig(level=logging.INFO,format='%(levelname)s %(message)s')
  url=os.environ.get('SUPABASE_URL','').rstrip('/')
@@ -237,6 +290,8 @@ def main():
      'Prefer':'resolution=merge-duplicates,return=minimal'
     },timeout=35)
     if not response.ok:raise RuntimeError(f'Supabase {response.status_code}: {response.text[:300]}')
+   # Only after a successful upsert; errors here fail the workflow visibly.
+   cleanup_stale_reschedules(sess,url,key,team,games)
    imported+=len(games)
    log.info('%s: %s Spiele übernommen',team,len(games))
   except Exception as exc:
