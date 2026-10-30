@@ -290,6 +290,50 @@ def cleanup_cancelled_games(sess, url, key, team, games):
                      team, row['datum'], row['heim'], row['gast'], row['quelle_id'])
     return removed
 
+def cleanup_missing_from_source(sess, url, key, team, games):
+    """Reconcile upcoming fixtures with the complete current FUSSBALL.DE snapshot.
+
+    Delete only auto-imported rows that are no longer present in the source.
+    Fail closed when the feed looks incomplete; never delete historical results.
+    """
+    active = [g for g in games if g['status'] != 'abgesetzt']
+    today = date.today().isoformat()
+    future = [g for g in active if g['datum'] >= today]
+    if len(games) < 10 or len(future) < 3:
+        log.warning('%s: Abgleich übersprungen: Spielplan möglicherweise unvollständig (%s Spiele, %s zukünftig)',
+                    team, len(games), len(future))
+        return 0
+    # Only the future portion actually covered by the source is reconciled.
+    end = max(g['datum'] for g in future)
+    ids = {g['quelle_id'] for g in active}
+    headers = {'apikey': key, 'Authorization': 'Bearer ' + key, 'Accept': 'application/json'}
+    resp = sess.get(url + '/rest/v1/team_spiele', params={
+        'select': 'team,quelle_id,datum,anstoss,heim,gast,status',
+        'team': 'eq.' + team, 'datum': 'gte.' + today, 'datum': 'lte.' + end,
+        'order': 'datum.asc', 'limit': '1000'
+    }, headers=headers, timeout=35)
+    resp.raise_for_status()
+    rows = resp.json()
+    if len(rows) >= 1000:
+        raise RuntimeError(f'{team}: DB-Ergebnislimit erreicht; keine Löschung')
+    stale = [r for r in rows if str(r.get('quelle_id', '')).startswith(('fs-', 'fd-'))
+             and r['quelle_id'] not in ids]
+    # Detect truncated/changed source before deleting large fractions of stored fixtures.
+    if len(stale) > 3 and len(stale) > max(1, len(rows) // 4):
+        raise RuntimeError(f'{team}: {len(stale)} von {len(rows)} zukünftigen DB-Spielen fehlen in Quelle; '
+                           'Sicherheitsstopp, keine Löschung')
+    removed = 0
+    for row in stale:
+        response = sess.delete(url + '/rest/v1/team_spiele', params={
+            'team': 'eq.' + team, 'quelle_id': 'eq.' + row['quelle_id'],
+            'datum': 'eq.' + row['datum']
+        }, headers={**headers, 'Prefer': 'return=minimal'}, timeout=35)
+        response.raise_for_status()
+        removed += 1
+        log.info('%s: nicht mehr auf FUSSBALL.DE vorhandenes Spiel entfernt: %s %s %s gegen %s (%s)',
+                 team, row['datum'], row.get('anstoss'), row['heim'], row['gast'], row['quelle_id'])
+    return removed
+
 def main():
  logging.basicConfig(level=logging.INFO,format='%(levelname)s %(message)s')
  url=os.environ.get('SUPABASE_URL','').rstrip('/')
@@ -338,6 +382,7 @@ def main():
    # Only after a successful upsert; errors here fail the workflow visibly.
    cleanup_stale_reschedules(sess,url,key,team,games)
    cleanup_cancelled_games(sess,url,key,team,games)
+   cleanup_missing_from_source(sess,url,key,team,games)
    imported+=len(games)
    log.info('%s: %s aktive Spiele übernommen, %s Absetzungen erkannt',team,len(active_games),len(games)-len(active_games))
   except Exception as exc:
