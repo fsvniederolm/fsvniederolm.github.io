@@ -1,0 +1,28 @@
+name: Mein FSV Platzkonflikte Mail
+on:
+  workflow_dispatch:
+  schedule:
+    # 12:00 und 18:00 Uhr deutscher Zeit (MEZ/MESZ), jeweils beide UTC-Varianten.
+    # Python lässt nur die tatsächlich passenden Ortszeiten zu.
+    - cron: '0 10,11,16,17 * * *'
+permissions:
+  contents: read
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Spielstaetten auf Konflikte pruefen und melden
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SMTP_USER: ${{ secrets.FSV_SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.FSV_SMTP_PASSWORD }}
+          SMTP_HOST: smtp.strato.de
+          SMTP_PORT: '465'
+          ALERT_TO: ugur.altan@outlook.de
+        run: python scripts/check_platzkonflikte.py
