@@ -87,8 +87,8 @@ def conflicts(day,events):
 def notify(items):
     msg=EmailMessage()
     msg['From']=os.environ['SMTP_USER']
-    msg['To']=os.environ.get('ALERT_TO','ugur.altan@outlook.de')
-    msg['Subject']=f"Mein FSV: {len(items)} neue Platzkonflikt(e)"
+    msg['To']=os.environ['ALERT_TO']
+    msg['Subject']=f"Mein FSV: {len(items)} {'aktuelle' if os.environ.get('SEND_ALL') == 'true' else 'neue'} Platzkonflikt(e)"
     names={'gross':'Nieder-Olm KR (großer Kunstrasen)','kleinfeld':'Nieder-Olm Kleinfeld KR','rasen':'Nieder-Olm RA'}
     lines=['Automatische Platzkonfliktprüfung – Mein FSV','Zeitraum: heute bis einschließlich 14 Tage','']
     for i,c in enumerate(items,1):
@@ -109,7 +109,13 @@ def main():
         day=(today+timedelta(days=i)).isoformat()
         found.extend(conflicts(day,fetch_day(day)))
     print(f'{len(found)} Konflikte gefunden.')
-    if not found:return
+    if not found:
+        print('Keine aktuellen Konflikte; keine E-Mail versendet.')
+        return
+    if os.environ.get('SEND_ALL') == 'true':
+        notify(found)
+        print(f'Einmalige Gesamtübersicht an {os.environ["ALERT_TO"]} versendet.')
+        return
     # SQL-Setup der Tabelle ist erforderlich; bei Fehlern nicht blind versenden.
     existing=api('/platzkonflikt_meldungen?select=konflikt_id&konflikt_id=in.('+','.join(c['id'] for c in found)+')')
     known={r['konflikt_id'] for r in existing}
@@ -118,7 +124,7 @@ def main():
     if not new:return
     notify(new)
     api('/platzkonflikt_meldungen',method='POST',body=[{'konflikt_id':c['id']} for c in new],extra={'Prefer':'return=minimal,resolution=ignore-duplicates'})
-    print(f'E-Mail an {os.environ.get("ALERT_TO","ugur.altan@outlook.de")} versendet; Meldungen gespeichert.')
+    print(f'E-Mail an {os.environ['ALERT_TO']} versendet; Meldungen gespeichert.')
 
 if __name__=='__main__':
     try:main()
