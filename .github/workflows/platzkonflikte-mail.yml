@@ -1,9 +1,14 @@
 name: Mein FSV Platzkonflikte Mail
 on:
   workflow_dispatch:
+    inputs:
+      send_all:
+        description: 'Einmalig ALLE aktuellen Konflikte senden (auch bereits gemeldete)'
+        type: boolean
+        required: true
+        default: false
   schedule:
-    # 12:00 und 18:00 Uhr deutscher Zeit (MEZ/MESZ), jeweils beide UTC-Varianten.
-    # Python lässt nur die tatsächlich passenden Ortszeiten zu.
+    # 12:00 und 18:00 Uhr deutscher Zeit (MEZ/MESZ)
     - cron: '0 10,11,16,17 * * *'
 permissions:
   contents: read
@@ -24,5 +29,6 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.FSV_SMTP_PASSWORD }}
           SMTP_HOST: smtp.strato.de
           SMTP_PORT: '465'
-          ALERT_TO: ugur.altan@outlook.de
+          ALERT_TO: ${{ secrets.FSV_KONFLIKT_EMPFAENGER }}
+          SEND_ALL: ${{ inputs.send_all || 'false' }}
         run: python scripts/check_platzkonflikte.py
