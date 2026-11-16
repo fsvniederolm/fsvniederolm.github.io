@@ -862,6 +862,16 @@ const dateEl=document.getElementById("date");
 
 function isoLocal(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`}
 function parseMin(t){const [h,m]=String(t||"00:00").slice(0,5).split(":").map(Number);return h*60+m}
+// DFBnet-Endzeit (Supabase TIME, z. B. "11:30:00") sicher auslesen.
+// Fehlende/ungültige Endzeiten verwenden weiterhin die bisherige Standarddauer.
+function parseDfbnetEnd(value,start){
+ const match=/^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/.exec(String(value??"").trim());
+ if(!match)return null;
+ const hours=Number(match[1]),minutes=Number(match[2]);
+ if(hours>23||minutes>59)return null;
+ const end=hours*60+minutes;
+ return end>start?end:null;
+}
 function fmtMin(v){return `${String(Math.floor(v/60)).padStart(2,"0")}:${String(v%60).padStart(2,"0")} Uhr`}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function mapPitch(ort){
@@ -979,7 +989,7 @@ function render(bookings){
 }
 
 async function fetchRows(d){
- const url=`${SUPABASE_URL}/rest/v1/spielstaetten_belegung?select=datum,anstoss,spielstaette,liga,heim,gast,kennung,status,synced_at&datum=eq.${encodeURIComponent(d)}&order=anstoss.asc`;
+ const url=`${SUPABASE_URL}/rest/v1/spielstaetten_belegung?select=datum,anstoss,ende_dfbnet,spielstaette,liga,heim,gast,kennung,status,synced_at&datum=eq.${encodeURIComponent(d)}&order=anstoss.asc`;
  const res=await fetch(url,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});
  if(!res.ok) throw new Error(await res.text());
  return await res.json();
@@ -1037,7 +1047,7 @@ async function loadBookings(){
        return {
          pitch:mapPitch(x.spielstaette),
          start,
-         end:start+(isTurnier?180:BLOCK),
+         end:parseDfbnetEnd(x.ende_dfbnet,start)??(start+(isTurnier?180:BLOCK)),
          age:x.liga||"Liga nicht angegeben",
          trainer:[x.heim,x.gast].filter(Boolean).join(" – "),
          kennung:x.kennung||"",
